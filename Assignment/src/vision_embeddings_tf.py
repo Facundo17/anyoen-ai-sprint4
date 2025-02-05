@@ -93,7 +93,7 @@ class FoundationalCVModel:
         
         if backbone == 'resnet50':
             # TODO: Load the ResNet50 model from tensorflow.keras.applications
-            self.base_model = None
+            self.base_model = ResNet50(include_top=True, weights="imagenet")
         elif backbone == 'resnet101':
             # TODO: Load the ResNet101 model from tensorflow.keras.applications
             self.base_model = None
@@ -108,7 +108,7 @@ class FoundationalCVModel:
             self.base_model = None
         elif backbone == 'convnextv2_tiny':
             # TODO: Load the ConvNeXtV2 Tiny model from transformers
-            self.base_model = None
+            self.base_model = TFConvNextV2Model()
         elif backbone == 'convnextv2_base':
             # TODO: Load the ConvNeXtV2 Base model from transformers
             self.base_model = None
