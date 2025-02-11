@@ -8,7 +8,7 @@ from tensorflow.keras.applications import (
 from tensorflow.keras.layers import Input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import GlobalAveragePooling2D
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
 import tensorflow as tf
 from PIL import Image
 
@@ -108,7 +108,7 @@ class FoundationalCVModel:
             self.base_model = None
         elif backbone == 'convnextv2_tiny':
             # TODO: Load the ConvNeXtV2 Tiny model from transformers
-            self.base_model = TFConvNextV2Model()
+            self.base_model = TFConvNextV2Model.from_pretrained("facebook/convnextv2-tiny-1k-224")
         elif backbone == 'convnextv2_base':
             # TODO: Load the ConvNeXtV2 Base model from transformers
             self.base_model = None
@@ -136,8 +136,7 @@ class FoundationalCVModel:
 
         
         if mode == 'eval':
-            # TODO: Set the model to evaluation mode (non-trainable)
-            pass
+            self.base_model.trainable = False
         
         # Take into account the model's input requirements. In models from transformers, the input is channels first, but in models from keras.applications, the input is channels last.
         # Aditionally, the output of the model is different in both cases, we need to get the pooling of the output layer.
@@ -146,17 +145,29 @@ class FoundationalCVModel:
         if backbone in ['vit_base', 'vit_large', 'convnextv2_tiny', 'convnextv2_base', 'convnextv2_large', 'swin_tiny', 'swin_small', 'swin_base']:
             # TODO: Adjust the input for channels first models within the model
             # You can use the perm argument of tf.transpose to permute the dimensions of the input tensor
-            input_layer_transposed = None
-            # TODO: Get the pooling output of the model "pooler_output"
-            outputs = None
+            # transponer para convertir a canales primero(bacth, channels, height, width)
+            input_layer_transposed = tf.transpose(input_layer, perm=[0,3,1,2])
+            
+            features = self.base_model(input_layer_transposed).last_hidden_state
+            
+            # Aplicar Global Average Pooling 2D para reducir dimensiones
+            x = GlobalAveragePooling2D()(features)
+            
         # If is a model from keras.applications:
         else:
             # TODO: Get the pooling output of the model
             # In this case the pooling layer is not included in the model, we can use a pooling layer such as GlobalAveragePooling2D
-            outputs = None
+            x = GlobalAveragePooling2D()(self.base_model.output)
         
         # TODO: Create the final model with the input layer and the pooling output
-        self.model = Model()
+        
+        # Capas finales
+        x = Dense(512, activation="relu")(x)
+        x = Dropout(0.3)(x)
+        outputs = Dense(10, activation="softmax")(x)
+
+        # Modelo final
+        self.model = Model(inputs=input_layer, outputs=outputs)
         
     def get_output_shape(self):
         """
@@ -378,6 +389,7 @@ def get_embeddings_df(batch_size=32, path="data/images", dataset_name='', backbo
     num_batches = len(dataset) // batch_size + (1 if len(dataset) % batch_size != 0 else 0)
     
     # Process images in batches and extract features
+    print(batch_size)
     for i in range(0, len(dataset), batch_size):
         # Get the image files and images for the current batch
         batch_files = dataset.image_files[i:i + batch_size]
