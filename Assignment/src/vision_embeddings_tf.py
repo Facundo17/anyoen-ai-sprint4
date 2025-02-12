@@ -8,7 +8,7 @@ from tensorflow.keras.applications import (
 from tensorflow.keras.layers import Input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
+from tensorflow.keras.layers import GlobalAveragePooling2D
 import tensorflow as tf
 from PIL import Image
 
@@ -29,11 +29,12 @@ def load_and_preprocess_image(image_path, target_size=(224, 224)):
     - np.array: Preprocessed image.
     """
     # TODO: Open the image using PIL Image.open and convert it to RGB format
-    img = None
+    img = Image.open(image_path).convert('RGB')
     # TODO: Resize the image to the target size
-    img = None
+    img = img.resize(target_size)
     # TODO: Convert the image to a numpy array and scale the pixel values to [0, 1]
-    img = None
+    img = np.array(img)
+    img = img / 255.0
 
     return img
 
@@ -93,7 +94,7 @@ class FoundationalCVModel:
         
         if backbone == 'resnet50':
             # TODO: Load the ResNet50 model from tensorflow.keras.applications
-            self.base_model = ResNet50(include_top=True, weights="imagenet")
+            self.base_model = ResNet50(include_top=False, weights="imagenet", input_tensor=input_layer)
         elif backbone == 'resnet101':
             # TODO: Load the ResNet101 model from tensorflow.keras.applications
             self.base_model = None
@@ -148,23 +149,18 @@ class FoundationalCVModel:
             # transponer para convertir a canales primero(bacth, channels, height, width)
             input_layer_transposed = tf.transpose(input_layer, perm=[0,3,1,2])
             
-            features = self.base_model(input_layer_transposed).last_hidden_state
+            features = self.base_model(input_layer_transposed).last_hidden_state # Esto debería ser (None, 768, 7, 7)
             
-            # Aplicar Global Average Pooling 2D para reducir dimensiones
-            x = GlobalAveragePooling2D()(features)
+            # Aplicamos Global Average Pooling 2D en los ejes espaciales (7,7) → (None, 768)
+            outputs = tf.reduce_mean(features, axis=[2, 3])
             
         # If is a model from keras.applications:
         else:
             # TODO: Get the pooling output of the model
             # In this case the pooling layer is not included in the model, we can use a pooling layer such as GlobalAveragePooling2D
-            x = GlobalAveragePooling2D()(self.base_model.output)
+            outputs = GlobalAveragePooling2D()(self.base_model.output)
         
         # TODO: Create the final model with the input layer and the pooling output
-        
-        # Capas finales
-        x = Dense(512, activation="relu")(x)
-        x = Dropout(0.3)(x)
-        outputs = Dense(10, activation="softmax")(x)
 
         # Modelo final
         self.model = Model(inputs=input_layer, outputs=outputs)
@@ -194,8 +190,12 @@ class FoundationalCVModel:
         numpy.ndarray
             Predictions or features from the model for the given images.
         """
+        # Verificar si el modelo ha sido correctamente inicializado
+        if not hasattr(self, "model"):
+            raise ValueError("El modelo no ha sido inicializado correctamente.")
+        
         # TODO: Perform a forward pass through the model and return the predictions
-        predictions = None
+        predictions = self.model.predict(images)
         return predictions
 
 
@@ -389,7 +389,6 @@ def get_embeddings_df(batch_size=32, path="data/images", dataset_name='', backbo
     num_batches = len(dataset) // batch_size + (1 if len(dataset) % batch_size != 0 else 0)
     
     # Process images in batches and extract features
-    print(batch_size)
     for i in range(0, len(dataset), batch_size):
         # Get the image files and images for the current batch
         batch_files = dataset.image_files[i:i + batch_size]
