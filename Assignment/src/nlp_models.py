@@ -158,9 +158,9 @@ class HuggingFaceEmbeddings:
         """
         self.model_name = model_name
         # TODO: Load the Hugging Face tokenizer from a pre-trained model
-        self.tokenizer = None
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name) 
         # TODO: Load the model from the Hugging Face model hub from the specified model name
-        self.model = None
+        self.model = AutoModel.from_pretrained(model_name)
         self.path = path
         self.save_path = save_path or 'Models'
         
@@ -188,20 +188,26 @@ class HuggingFaceEmbeddings:
             np.ndarray: A numpy array containing the embedding vector for the input text.
         """
         ### TODO: Tokenize the input text using the Hugging Face tokenizer
-        inputs = None
+        inputs = self.tokenizer(text=text, padding=True, return_tensors='pt') # debe devolver un diccionario que contiene input_ids = los tokens codificados, attention_mask = máscara que contiene qué tokens son reales (1) y cuáles son padding (0)
         
         # Move the inputs to the device
         inputs = {key: value.to(self.device) for key, value in inputs.items()}
         
         with torch.no_grad():
             # TODO: Generate the embeddings using the Hugging Face model from the tokenized input
-            outputs = None
+            outputs = self.model(**inputs)
         
         # TODO: Extract the embeddings from the model output, send to cpu and return the numpy array
         # Remember that the model will return embeddings for the whole sequence, so you may need to aggregate them
         # Get the last hidden state and take the mean across the sequence dimension
         # The resulting tensor should have shape [batch_size, hidden_size]
-        embeddings = None
+        # batch_size: número de textos procesados
+        # sequence_length: longitud de la secuencia
+        # hidden_size: dimensión de los embeddings
+        embeddings = outputs.last_hidden_state.mean(dim=1)
+        embeddings = embeddings.squeeze(0).cpu().numpy() # # Elimina la primera dimensión del batch si es 1, dejando solo 384
+        
+        # NOTA: si en alguna vez procesas múltiples textos a la vez (bath_siza > 1), esta solución con squeeze fallará.
         
         return embeddings
 
@@ -210,9 +216,11 @@ class HuggingFaceEmbeddings:
         df = pd.read_csv(self.path)
         # TODO: Generate embeddings for the specified column using the `get_embedding` method
         # Make sure to convert the embeddings to a list before saving to the DataFrame
-        df["embeddings"] = None
+        df["embeddings"] = self.get_embedding(column)
         
         os.makedirs(directory, exist_ok=True)
         # TODO: Save the DataFrame with the embeddings to a new CSV file in the specified directory
+        output_path = os.path.join(directory, file) # uno la ruta con el nombre del archivo
+        df.to_csv(output_path, index=False) # se guarda el dataframe, index=False evita que se guarde el indice del dataframe como columna adicional
         
 
