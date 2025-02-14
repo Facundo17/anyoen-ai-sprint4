@@ -188,7 +188,8 @@ class HuggingFaceEmbeddings:
             np.ndarray: A numpy array containing the embedding vector for the input text.
         """
         ### TODO: Tokenize the input text using the Hugging Face tokenizer
-        inputs = self.tokenizer(text=text, padding=True, return_tensors='pt') # debe devolver un diccionario que contiene input_ids = los tokens codificados, attention_mask = máscara que contiene qué tokens son reales (1) y cuáles son padding (0)
+        inputs = self.tokenizer(text=text, padding=True, max_length=512, truncation=True, return_tensors='pt') # debe devolver un diccionario que contiene input_ids = los tokens codificados, attention_mask = máscara que contiene qué tokens son reales (1) y cuáles son padding (0)
+        # padding=True truncation=True para tener batch tensors con la misma longitud
         
         # Move the inputs to the device
         inputs = {key: value.to(self.device) for key, value in inputs.items()}
@@ -216,7 +217,8 @@ class HuggingFaceEmbeddings:
         df = pd.read_csv(self.path)
         # TODO: Generate embeddings for the specified column using the `get_embedding` method
         # Make sure to convert the embeddings to a list before saving to the DataFrame
-        df["embeddings"] = self.get_embedding(column)
+        # En el código donde procesas el DataFrame
+        df["embeddings"] = df[column].apply(lambda x: self.get_embedding(x).tolist())
         
         os.makedirs(directory, exist_ok=True)
         # TODO: Save the DataFrame with the embeddings to a new CSV file in the specified directory
