@@ -2,3 +2,4 @@ Assignment/testenv
 Assignment/data/images
 Assignment/Embeddings
 Assignment/.pytest_cache
+Assignment/tests/__pycache__
