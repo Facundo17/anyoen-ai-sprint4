@@ -52,9 +52,9 @@ class GPT:
         """
         import openai
         from dotenv import load_dotenv, find_dotenv
-        # TODO: Load the OpenAI API key from the .env file
+        #  Load the OpenAI API key from the .env file
         _ = load_dotenv(find_dotenv()) # read local .env file
-        # TODO: Set the OpenAI API key
+        #  Set the OpenAI API key
         openai.api_key  = None
 
         self.path = path
@@ -71,13 +71,13 @@ class GPT:
             list: A list containing the embedding vector for the input text.
         """
         from openai import OpenAI
-        # TODO: Instantiate the OpenAI client
+        #  Instantiate the OpenAI client
         client = None
         
-        # TODO: Optional. Do text preprocessing if needed (e.g., removing newlines)
+        #  Optional. Do text preprocessing if needed (e.g., removing newlines)
         text = None
         
-        # TODO: Call the OpenAI API to generate the embeddings and return only the embedding data
+        #  Call the OpenAI API to generate the embeddings and return only the embedding data
         embeddings_np = None
         return embeddings_np
 
@@ -95,12 +95,12 @@ class GPT:
         """
         # Load the CSV file
         df = pd.read_csv(self.path)
-        # TODO: Generate embeddings in a new column 'embeddings', for the specified column using the `get_embedding` method
+        #  Generate embeddings in a new column 'embeddings', for the specified column using the `get_embedding` method
         # You can use a lambda function to apply the `get_embedding` method to each row in the column
         df["embeddings"] = None
 
         os.makedirs(directory, exist_ok=True) 
-        # TODO: Save the DataFrame with the embeddings to a new CSV file in the specified directory
+        #  Save the DataFrame with the embeddings to a new CSV file in the specified directory
 
 
 ## Hugging face Models
@@ -157,9 +157,9 @@ class HuggingFaceEmbeddings:
             device (str, optional): Device to use for model processing. Defaults to 'cuda' if available, otherwise 'cpu'.
         """
         self.model_name = model_name
-        # TODO: Load the Hugging Face tokenizer from a pre-trained model
+        #  Load the Hugging Face tokenizer from a pre-trained model
         self.tokenizer = AutoTokenizer.from_pretrained(model_name) 
-        # TODO: Load the model from the Hugging Face model hub from the specified model name
+        #  Load the model from the Hugging Face model hub from the specified model name
         self.model = AutoModel.from_pretrained(model_name)
         self.path = path
         self.save_path = save_path or 'Models'
@@ -187,7 +187,7 @@ class HuggingFaceEmbeddings:
         Returns:
             np.ndarray: A numpy array containing the embedding vector for the input text.
         """
-        ### TODO: Tokenize the input text using the Hugging Face tokenizer
+        ###  Tokenize the input text using the Hugging Face tokenizer
         inputs = self.tokenizer(text=text, padding=True, max_length=512, truncation=True, return_tensors='pt') # debe devolver un diccionario que contiene input_ids = los tokens codificados, attention_mask = máscara que contiene qué tokens son reales (1) y cuáles son padding (0)
         # padding=True truncation=True para tener batch tensors con la misma longitud
         
@@ -195,10 +195,10 @@ class HuggingFaceEmbeddings:
         inputs = {key: value.to(self.device) for key, value in inputs.items()}
         
         with torch.no_grad():
-            # TODO: Generate the embeddings using the Hugging Face model from the tokenized input
+            #  Generate the embeddings using the Hugging Face model from the tokenized input
             outputs = self.model(**inputs)
         
-        # TODO: Extract the embeddings from the model output, send to cpu and return the numpy array
+        #  Extract the embeddings from the model output, send to cpu and return the numpy array
         # Remember that the model will return embeddings for the whole sequence, so you may need to aggregate them
         # Get the last hidden state and take the mean across the sequence dimension
         # The resulting tensor should have shape [batch_size, hidden_size]
@@ -215,13 +215,13 @@ class HuggingFaceEmbeddings:
     def get_embedding_df(self, column, directory, file):
         # Load the CSV file
         df = pd.read_csv(self.path)
-        # TODO: Generate embeddings for the specified column using the `get_embedding` method
+        #  Generate embeddings for the specified column using the `get_embedding` method
         # Make sure to convert the embeddings to a list before saving to the DataFrame
         # En el código donde procesas el DataFrame
         df["embeddings"] = df[column].apply(lambda x: self.get_embedding(x).tolist())
         
         os.makedirs(directory, exist_ok=True)
-        # TODO: Save the DataFrame with the embeddings to a new CSV file in the specified directory
+        #  Save the DataFrame with the embeddings to a new CSV file in the specified directory
         output_path = os.path.join(directory, file) # uno la ruta con el nombre del archivo
         df.to_csv(output_path, index=False) # se guarda el dataframe, index=False evita que se guarde el indice del dataframe como columna adicional
         

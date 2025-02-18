@@ -62,9 +62,9 @@ def visualize_embeddings(X_train, X_test, y_train, y_test, plot_type='2D', metho
             
             reduced_embeddings = red.transform(X_test)
         elif method == 't-SNE':
-            # TODO: Implement t-SNE for 3D visualization
+            #  Implement t-SNE for 3D visualization
             red = None
-            # TODO: Use the model to train and transform the test data
+            #  Use the model to train and transform the test data
             reduced_embeddings = None
         else:
             raise ValueError("Invalid method. Please choose either 'PCA' or 't-SNE'.")
@@ -83,9 +83,9 @@ def visualize_embeddings(X_train, X_test, y_train, y_test, plot_type='2D', metho
             
             reduced_embeddings = red.transform(X_test)
         elif method == 't-SNE':
-            # TODO: Implement t-SNE for 2D visualization
+            #  Implement t-SNE for 2D visualization
             red = None
-            # TODO: Use the model to train and transform the test data
+            #  Use the model to train and transform the test data
             reduced_embeddings = None
         else:
             raise ValueError("Invalid method. Please choose either 'PCA' or 't-SNE'.")
